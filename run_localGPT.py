@@ -122,7 +122,7 @@ def retrieval_qa_pipline(device_type, use_history, promptTemplate_type="llama"):
 
     """
     (1) Chooses an appropriate langchain library based on the enbedding model name.  Matching code is contained within ingest.py.
-    
+
     (2) Provides additional arguments for instructor and BGE models to improve results, pursuant to the instructions contained on
     their respective huggingface repository, project page or github repository.
     """
@@ -248,15 +248,52 @@ def main(device_type, show_sources, use_history, model_type, save_qa):
     # check if models directory do not exist, create a new one and store models here.
     if not os.path.exists(MODELS_PATH):
         os.mkdir(MODELS_PATH)
+    embeddings = get_embeddings(device_type)
 
-    qa = retrieval_qa_pipline(device_type, use_history, promptTemplate_type=model_type)
+    logging.info(f"Loaded embeddings from {EMBEDDING_MODEL_NAME}")
+    from langchain.prompts import PromptTemplate
+    from langchain.chains.question_answering import load_qa_chain
+    # load the vectorstore
+    db = Chroma(persist_directory=PERSIST_DIRECTORY, embedding_function=embeddings, client_settings=CHROMA_SETTINGS)
+    query = input("\nEnter a query: ")
+    results = db.similarity_search_with_relevance_scores(query, k=3)
+    system_prompt = """You are a helpful assistant, you will use the provided context to answer user questions.
+Read the given context before answering questions and think step by step. If you can not answer a user question based on
+the provided context, inform the user. Do not use any other information for answering user. Provide a detailed answer to the question."""
+    B_INST, E_INST = "[INST]", "[/INST]"
+    B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+    SYSTEM_PROMPT = B_SYS + system_prompt + E_SYS
+    instruction = """
+            Context: {context}
+            Chat History: {history}
+            User: {query}"""
+
+    prompt_template = B_INST + SYSTEM_PROMPT + instruction + E_INST
+    prompt = PromptTemplate(input_variables=["context", "history", "query"], template=prompt_template)
+    if use_history:
+        history = None
+        input_text = prompt.format(history="\n".join([f"{h['role']}: {h['content']}" for h in history]), query=query,context=results)
+    else:
+        input_text = prompt.format(context=results, history="No History", query=query)
+    # prompt, memory = get_prompt_template(promptTemplate_type=model_type, history=use_history)
+    print("=======Prompt==========",input_text, "\n")
+    print("=======Results==========",results, "\n")
+    
+    llm = load_model(device_type, model_id=MODEL_ID, model_basename=MODEL_BASENAME, LOGGING=logging)
+    response = llm.generate([input_text])
+    #chain = load_qa_chain(llm=llm, chain_type="stuff")
+    #response = chain(input_text)["output_text"]
+    print("Response: ",response)
+    """qa = retrieval_qa_pipline(device_type, use_history, promptTemplate_type=model_type)
     # Interactive questions and answers
     while True:
         query = input("\nEnter a query: ")
         if query == "exit":
             break
         # Get the answer from the chain
-        res = qa(query)
+        print('getting_answer')
+        res = qa({'query':query})
+        print(res)
         answer, docs = res["result"], res["source_documents"]
 
         # Print the result
@@ -275,7 +312,7 @@ def main(device_type, show_sources, use_history, model_type, save_qa):
 
         # Log the Q&A to CSV only if save_qa is True
         if save_qa:
-            utils.log_to_csv(query, answer)
+            utils.log_to_csv(query, answer)"""
 
 
 if __name__ == "__main__":

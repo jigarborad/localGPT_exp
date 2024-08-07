@@ -46,9 +46,10 @@ N_BATCH = 512
 DOCUMENT_MAP = {
     ".html": UnstructuredHTMLLoader,
     ".txt": TextLoader,
+    ".dxf": TextLoader,
     ".md": UnstructuredMarkdownLoader,
     ".py": TextLoader,
-    # ".pdf": PDFMinerLoader,
+    ".pdf": PDFMinerLoader,
     ".pdf": UnstructuredFileLoader,
     ".csv": CSVLoader,
     ".xls": UnstructuredExcelLoader,
@@ -107,8 +108,8 @@ EMBEDDING_MODEL_NAME = "hkunlp/instructor-large"  # Uses 1.5 GB of VRAM (High Ac
 # MODEL_BASENAME = "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf"
 
 # LLAMA 3 # use for Apple Silicon
-MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
-MODEL_BASENAME = None
+# MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
+# MODEL_BASENAME = None
 
 # LLAMA 3 # use for NVIDIA GPUs
 # MODEL_ID = "unsloth/llama-3-8b-bnb-4bit"
@@ -117,8 +118,8 @@ MODEL_BASENAME = None
 # MODEL_ID = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
 # MODEL_BASENAME = "mistral-7b-instruct-v0.1.Q8_0.gguf"
 
-# MODEL_ID = "TheBloke/Llama-2-70b-Chat-GGUF"
-# MODEL_BASENAME = "llama-2-70b-chat.Q4_K_M.gguf"
+MODEL_ID = "TheBloke/Llama-2-13B-chat-GGUF"
+MODEL_BASENAME = "llama-2-13b-chat.Q4_K_M.gguf"
 
 ####
 #### (FOR HF MODELS)
